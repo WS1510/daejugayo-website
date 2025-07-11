@@ -3,40 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PLAYLOG SOUNDLAB</title>
+    <title>PLAYLOG SOUNDLAB - 대주가요 시즌2 음악소셜링파티 | 보컬 및 퍼포머 모집</title>
+    
+    <!-- SEO 메타 태그 -->
+    <meta name="description" content="PLAYLOG SOUNDLAB에서 주최하는 대주가요 시즌2 음악소셜링파티. 보컬리스트와 퍼포머를 모집하며, 다양한 음악 장르의 무대 경험을 제공합니다.">
+    <meta name="keywords" content="PLAYLOG SOUNDLAB, 대주가요, 음악소셜링파티, 보컬모집, 퍼포머모집, 음악이벤트, 대전음악, 라이브공연">
+    <meta name="author" content="PLAYLOG SOUNDLAB">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph 메타 태그 -->
+    <meta property="og:title" content="PLAYLOG SOUNDLAB - 대주가요 시즌2">
+    <meta property="og:description" content="특별한 음악소셜링파티에 참여하세요. 보컬리스트와 퍼포머를 모집합니다.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://daejugayo.com">
+    <meta property="og:site_name" content="PLAYLOG SOUNDLAB">
+    <meta property="og:locale" content="ko_KR">
+    
+    <!-- Twitter Card 메타 태그 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PLAYLOG SOUNDLAB - 대주가요 시즌2">
+    <meta name="twitter:description" content="특별한 음악소셜링파티에 참여하세요. 보컬리스트와 퍼포머를 모집합니다.">
+    
+    <!-- 파비콘 -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <nav class="navbar">
+        <nav class="navbar" role="navigation" aria-label="주요 내비게이션">
             <div class="nav-container">
-                <h1 class="nav-logo" onclick="goToHome()" style="cursor: pointer;">PLAYLOG SOUNDLAB</h1>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('home')">홈</a>
+                <h1 class="nav-logo" onclick="goToHome()" style="cursor: pointer;" role="button" tabindex="0" onkeypress="if(event.key==='Enter')goToHome()" aria-label="PLAYLOG SOUNDLAB 홈으로 이동">PLAYLOG SOUNDLAB</h1>
+                <ul class="nav-menu" role="menubar" id="nav-menu">
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('home')" role="menuitem" onkeypress="if(event.key==='Enter')scrollToSection('home')">홈</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('about')">레이블 소개</a>
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('about')" role="menuitem" onkeypress="if(event.key==='Enter')scrollToSection('about')">레이블 소개</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('daejugayo')">대주가요</a>
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('daejugayo')" role="menuitem" onkeypress="if(event.key==='Enter')scrollToSection('daejugayo')">대주가요</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('apply')">지원하기</a>
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('apply')" role="menuitem" onkeypress="if(event.key==='Enter')scrollToSection('apply')">지원하기</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('contact')">FAQ</a>
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('contact')" role="menuitem" onkeypress="if(event.key==='Enter')scrollToSection('contact')">FAQ</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="javascript:void(0)" class="nav-link admin-login-btn" onclick="showAdminLogin()">관리자</a>
+                    <li class="nav-item" role="none">
+                        <a href="javascript:void(0)" class="nav-link admin-login-btn" onclick="showAdminLogin()" role="menuitem" onkeypress="if(event.key==='Enter')showAdminLogin()">관리자</a>
                     </li>
                 </ul>
-                <div class="nav-toggle" id="mobile-menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
+                <button class="nav-toggle" id="mobile-menu" aria-label="모바일 메뉴 토글" aria-expanded="false" aria-controls="nav-menu">
+                    <span class="bar" aria-hidden="true"></span>
+                    <span class="bar" aria-hidden="true"></span>
+                    <span class="bar" aria-hidden="true"></span>
+                </button>
             </div>
         </nav>
     </header>
@@ -44,14 +68,21 @@
     <main>
         <section id="home" class="hero">
             <div class="hero-content">
-                <h1 class="hero-title">대주가요 SEASON 2 �</h1>
-                <p class="hero-subtitle">PLAYLOG SOUNDLAB이 선사하는 특별한 음악소셜링파티</p>
-                <div class="season-info">
-                    <div class="season-badge">시즌 1 완주 ✅ 10회차 성공적 마무리</div>
+                <h1 class="hero-title">
+                    <span class="title-line1">대주가요</span>
+                    <span class="title-line2">SEASON 2</span>
+                </h1>
+                <p class="hero-subtitle">PLAYLOG SOUNDLAB이 선사하는 특별한 공연소셜링파티</p>
+                <div class="hero-description">
+                    <p class="hero-text">매주 토요일 오후 7시, 5명의 보컬이 만들어내는 음악의 향연</p>
+                    <p class="hero-text">관객과 함께 소통하며 음악으로 하나되는 특별한 시간</p>
+                    <p class="hero-text">공연이 끝나면 이어지는 즐거운 애프터파티까지</p>
                 </div>
-                <div class="hero-buttons">
-                    <button class="cta-button primary" onclick="scrollToSection('apply')">보컬 지원하기</button>
-                    <button class="cta-button secondary" onclick="scrollToSection('daejugayo')">시즌2 일정 확인</button>
+                <div class="scroll-indicator" onclick="scrollToSection('about')">
+                    <div class="scroll-text">더 알아보기</div>
+                    <div class="scroll-arrow">
+                        <span></span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -61,31 +92,22 @@
                 <h2 class="section-title">PLAYLOG SOUNDLAB</h2>
                 <div class="about-content">
                     <div class="about-text">
-                        <p>PLAYLOG SOUNDLAB은 새로운 음악 경험을 만들어가는 혁신적인 음악 레이블입니다.</p>
-                        <p>우리의 대표 콘텐츠 <strong>'대주가요'</strong>는 보컬들이 무대에서 실력을 뽐내고, 
-                        관객들과 함께 음악을 통해 소통하는 특별한 음악소셜링파티입니다.</p>
-                        <div class="label-stats">
-                            <div class="stat-item">
-                                <span class="stat-number">Season 2</span>
-                                <span class="stat-label">현재 시즌</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">10회</span>
-                                <span class="stat-label">시즌1 완주</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">50+</span>
-                                <span class="stat-label">참여 보컬</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-number">300+</span>
-                                <span class="stat-label">누적 관객</span>
-                            </div>
-                        </div>
+                        <p>PLAYLOG SOUNDLAB은<br>
+                        새로운 음악 경험을 만들어가는<br>
+                        혁신적인 음악 레이블입니다.<br>
+                        숨어있는 보컬들을 발굴하고, 꿈꾸던 무대의 기회를 제공하여<br>
+                        음악적 재능이 빛날 수 있도록 돕습니다.<br><br>
+                        그리고 우리의 대표 콘텐츠 <strong>'대주가요'</strong>는<br>
+                        그런 보컬들이 무대에서 실력을 뽐내고,<br>
+                        관객들과 함께 음악을 통해 소통할 수 있는<br>
+                        특별한 음악소셜링파티입니다.<br><br>
+                        <strong style="font-size: 1.3em; color: #ff6b6b;">그래서 준비했습니다!</strong><br>
+                        <span style="font-size: 2em;">👇</span></p>
                     </div>
                     <div class="about-image">
-                        <div class="placeholder-image">
-                            <span>🎧</span>
+                        <div class="image-gallery">
+                            <img src="레이블소개이미지.jpg" alt="PLAYLOG SOUNDLAB 레이블 소개" class="label-intro-image">
+                            <img src="레이블소개이미지2.jpg" alt="PLAYLOG SOUNDLAB 레이블 소개 2" class="label-intro-image">
                         </div>
                     </div>
                 </div>
@@ -143,7 +165,6 @@
                 <!-- 시즌2 세부 정보 -->
                 <div class="season-details">
                     <div class="detail-card">
-                        <div class="detail-icon">🗓️</div>
                         <h3>시즌2 일정</h3>
                         <div class="schedule-grid">
                             <div class="schedule-item">
@@ -163,7 +184,6 @@
                     </div>
 
                     <div class="detail-card">
-                        <div class="detail-icon">🎵</div>
                         <h3>진행 방식</h3>
                         <div class="process-steps">
                             <div class="step">
@@ -191,7 +211,6 @@
                     </div>
 
                     <div class="detail-card">
-                        <div class="detail-icon">🎉</div>
                         <h3>애프터파티</h3>
                         <div class="afterparty-features">
                             <div class="feature-item">
@@ -228,14 +247,14 @@
                                 <span class="btn-icon">🎤</span>
                                 <div class="btn-text">
                                     <strong>보컬 지원하기</strong>
-                                    <small>무대에서 당신의 재능을 보여주세요</small>
+                                    <small>무대에서 당신의 재능을<br>보여주세요</small>
                                 </div>
                             </button>
                             <button class="cta-btn audience" onclick="openPartyApplication()">
                                 <span class="btn-icon">🎫</span>
                                 <div class="btn-text">
                                     <strong>관객 신청하기</strong>
-                                    <small>함께 음악을 즐기고 소통해요</small>
+                                    <small>함께 음악을 즐기고<br>소통해요</small>
                                 </div>
                             </button>
                         </div>
@@ -257,7 +276,7 @@
                 <!-- 합격자 인증 섹션 -->
                 <div class="access-control">
                     <div class="access-info">
-                        <p>📋 <strong>공연 참여 신청</strong>은 보컬 오디션 합격자만 이용할 수 있습니다.</p>
+                        <p>📋 <strong>공연 참여 신청</strong>은 보컬지원 합격자만 이용할 수 있습니다.</p>
                         <button class="access-btn" onclick="showAccessForm()">합격자 인증하기</button>
                     </div>
                 </div>
@@ -265,14 +284,14 @@
                 <!-- 보컬 지원 폼 -->
                 <div id="vocal-application" class="application-form active">
                     <div class="form-header">
-                        <h3>🎤 보컬 지원하기</h3>
-                        <p>대주가요 보컬로 오디션을 받고 싶으신가요? 언제든지 지원해주세요!</p>
+                        <h3>보컬 지원하기</h3>
+                        <p>대주가요 무대에 보컬로 참여하고 싶으신가요?<br>언제든지 지원해주세요!</p>
                     </div>
                     
                     <!-- 오디션 안내 -->
                     <div class="performance-info">
                         <div class="info-card welcome">
-                            <h4>� 보컬 오디션 안내</h4>
+                            <h4>보컬 지원 안내</h4>
                             <div class="performance-details">
                                 <div class="detail-item">
                                     <div class="detail-icon">📝</div>
@@ -311,14 +330,45 @@
                             
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="vocal-region">시/도 *</label>
+                                    <select id="vocal-region" name="region" required onchange="handleRegionChange()">
+                                        <option value="">시/도를 선택하세요</option>
+                                        <option value="서울">서울특별시</option>
+                                        <option value="경기">경기도</option>
+                                        <option value="인천">인천광역시</option>
+                                        <option value="부산">부산광역시</option>
+                                        <option value="대구">대구광역시</option>
+                                        <option value="광주">광주광역시</option>
+                                        <option value="대전">대전광역시</option>
+                                        <option value="울산">울산광역시</option>
+                                        <option value="세종">세종특별자치시</option>
+                                        <option value="강원">강원특별자치도</option>
+                                        <option value="충북">충청북도</option>
+                                        <option value="충남">충청남도</option>
+                                        <option value="전북">전라북도</option>
+                                        <option value="전남">전라남도</option>
+                                        <option value="경북">경상북도</option>
+                                        <option value="경남">경상남도</option>
+                                        <option value="제주">제주특별자치도</option>
+                                        <option value="기타">기타</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vocal-detail-region">세부 지역 *</label>
+                                    <select id="vocal-detail-region" name="detail_region" required disabled>
+                                        <option value="">시/도를 먼저 선택하세요</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="vocal-phone">연락처 *</label>
                                     <input type="tel" id="vocal-phone" name="phone" 
                                         placeholder="010-0000-0000" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="vocal-email">이메일 *</label>
-                                    <input type="email" id="vocal-email" name="email" 
-                                        placeholder="example@email.com" required>
+                                    <!-- 빈 공간 -->
                                 </div>
                             </div>
                         </div>
@@ -328,7 +378,7 @@
                             <h4 class="section-header">🎵 음악 정보 및 지원 내용</h4>
                             <div class="form-group">
                                 <label for="vocal-genre">선호 장르 *</label>
-                                <select id="vocal-genre" name="genre" required>
+                                <select id="vocal-genre" name="genre" required onchange="handleGenreChange()">
                                     <option value="">장르를 선택하세요</option>
                                     <option value="팝">팝</option>
                                     <option value="록">록</option>
@@ -336,12 +386,19 @@
                                     <option value="R&B">R&B</option>
                                     <option value="인디">인디</option>
                                     <option value="발라드">발라드</option>
-                                    <option value="기타">기타</option>
+                                    <option value="기타">기타 (직접 입력)</option>
                                 </select>
                             </div>
                             
+                            <!-- 기타 장르 직접 입력 필드 -->
+                            <div class="form-group" id="custom-genre-group" style="display: none;">
+                                <label for="vocal-custom-genre">기타 장르 입력 *</label>
+                                <input type="text" id="vocal-custom-genre" name="custom_genre" 
+                                    placeholder="예: 클래식, 트로트, 뮤지컬 등">
+                            </div>
+                            
                             <div class="form-group">
-                                <label for="vocal-song">오디션 곡 *</label>
+                                <label for="vocal-song">지원 곡명 *</label>
                                 <input type="text" id="vocal-song" name="song" 
                                     placeholder="아티스트 - 곡명 (예: 아이유 - 좋은 날)" required>
                             </div>
@@ -353,7 +410,7 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="vocal-video">영상 링크 (선택)</label>
+                                <label for="vocal-video">지원영상 링크 (선택)</label>
                                 <input type="url" id="vocal-video" name="video" 
                                     placeholder="YouTube, Instagram 등 본인 공연 영상 링크">
                                 <small class="form-hint">본인의 공연 영상이 있다면 공유해주세요 (심사에 도움이 됩니다)</small>
@@ -370,7 +427,7 @@
                                     </label>
                                     <div class="file-list" id="file-list"></div>
                                 </div>
-                                <small class="form-hint">음성 파일, 영상, 사진, PDF 등을 첨부할 수 있습니다 (최대 10MB, 파일당)</small>
+                                <small class="form-hint">영상 또는 음성파일을 첨부할 수 있습니다. (파일당 최대 100MB)</small>
                             </div>
                             
                             <div class="form-group">
@@ -700,8 +757,9 @@
                         </a>
                     </div>
                     <div class="contact-info-simple">
-                        <p>📧 문의: playlogsoundlab@gmail.com</p>
-                        <p>📱 인스타그램: @singnsul612</p>
+                        <p>공연 및 행사 / 협업 / 협찬 문의</p>
+                        <p>이메일 : playlogsoundlab@gmail.com</p>
+                        <p>인스타그램 DM : @singnsul612</p>
                     </div>
                 </div>
             </div>

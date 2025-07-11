@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 페이지 - 대주가요</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- SheetJS 라이브러리 추가 (Excel 파일 생성용) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -122,6 +124,47 @@
             background: #f7fafc;
             border-radius: 10px;
             border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .applicant-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 실시간 상태 변경 애니메이션 */
+        .applicant-item.approved-animation {
+            background: #d4edda !important;
+            border-left: 4px solid #28a745 !important;
+            animation: approveGlow 2s ease-in-out;
+        }
+
+        .applicant-item.rejected-animation {
+            background: #f8d7da !important;
+            border-left: 4px solid #dc3545 !important;
+            animation: rejectSlide 0.3s ease-out forwards;
+        }
+
+        @keyframes approveGlow {
+            0% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+            50% { transform: scale(1.02); box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3); }
+            100% { transform: scale(1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        }
+
+        @keyframes rejectSlide {
+            0% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-100%); }
+        }
+
+        /* 버튼 제거 애니메이션 */
+        .action-buttons.removing {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.8); }
         }
 
         .applicant-info h3 {
@@ -495,9 +538,6 @@
                 <h2>⚡ 빠른 작업</h2>
                 
                 <div class="quick-actions">
-                    <button class="btn btn-primary" onclick="addTestData()">
-                        ➕ 테스트 지원자 추가
-                    </button>
                     <button class="btn btn-primary" onclick="generateAuthCode()">
                         🔑 인증코드 생성
                     </button>
@@ -509,6 +549,15 @@
                     </button>
                     <button class="btn btn-primary" onclick="refreshData()">
                         🔄 새로고침
+                    </button>
+                    <button class="btn btn-secondary" onclick="addTestApplicants()" style="background: #6b46c1;">
+                        🧪 테스트 지원자 추가
+                    </button>
+                    <button class="btn btn-secondary" onclick="showNotificationSettings()" style="background: #f59e0b;">
+                        ⚙️ 알림 방법 설정
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllData()" style="background: #dc2626;">
+                        🗑️ 모든 데이터 삭제
                     </button>
                 </div>
 
@@ -538,7 +587,7 @@
     <script>
         // 지원자 데이터 저장소 (실제 서버 연동 전까지 localStorage 사용)
         let applicantsData = JSON.parse(localStorage.getItem('applicantsData')) || [];
-        let rejectedCount = parseInt(localStorage.getItem('rejectedCount')) || 0;
+        let rejectedCount = applicantsData.filter(a => a.status === 'rejected').length;
 
         // 기존 데이터 마이그레이션 (새로운 필드 추가)
         function migrateData() {
@@ -562,31 +611,762 @@
 
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('관리자 페이지 로드 시작');
+            console.log('초기 지원자 데이터:', applicantsData);
+            console.log('초기 거절 카운트:', rejectedCount);
+            
             checkAdminAccess();
             migrateData();
             loadApplicants();
             updateCounts();
+            
+            // 버튼 이벤트 리스너 확인 및 추가
+            checkButtonEvents();
+            
+            console.log('관리자 페이지 로드 완료');
         });
+
+        // 버튼 이벤트 확인 및 수동 바인딩
+        function checkButtonEvents() {
+            console.log('버튼 이벤트 확인 시작');
+            
+            // 테스트 지원자 추가 버튼 확인
+            const testBtn = document.querySelector('button[onclick="addTestApplicants()"]');
+            if (testBtn) {
+                console.log('테스트 지원자 추가 버튼 찾음');
+                // 기존 onclick 외에 추가 이벤트 리스너 바인딩
+                testBtn.addEventListener('click', function(e) {
+                    console.log('테스트 지원자 추가 버튼 클릭됨');
+                    e.preventDefault();
+                    addTestApplicants();
+                });
+            } else {
+                console.error('테스트 지원자 추가 버튼을 찾을 수 없습니다');
+            }
+            
+            // 데이터 삭제 버튼 확인
+            const clearBtn = document.querySelector('button[onclick="clearAllData()"]');
+            if (clearBtn) {
+                console.log('데이터 삭제 버튼 찾음');
+                // 기존 onclick 외에 추가 이벤트 리스너 바인딩
+                clearBtn.addEventListener('click', function(e) {
+                    console.log('데이터 삭제 버튼 클릭됨');
+                    e.preventDefault();
+                    clearAllData();
+                });
+            } else {
+                console.error('데이터 삭제 버튼을 찾을 수 없습니다');
+            }
+            
+            console.log('버튼 이벤트 확인 완료');
+        }
+
+        // 전역 스코프에 함수들을 명시적으로 바인딩
+        window.addTestApplicants = addTestApplicants;
+        window.clearAllData = clearAllData;
+        window.approveApplicant = approveApplicant;
+        window.rejectApplicant = rejectApplicant;
+        window.showNotificationSettings = showNotificationSettings;
+        window.saveNotificationSettings = saveNotificationSettings;
+        window.closeNotificationSettings = closeNotificationSettings;
+        window.copyToClipboard = copyToClipboard;
+        window.closeManualCodeModal = closeManualCodeModal;
+        window.copyAllApprovedMessages = copyAllApprovedMessages;
+        window.copyAllPendingMessages = copyAllPendingMessages;
+        window.processBulkNotifications = processBulkNotifications;
+        window.closeBulkNotificationModal = closeBulkNotificationModal;
+        window.exportData = exportData;
+        window.exportDataAsCSV = exportDataAsCSV;
+        window.generateAuthCode = generateAuthCode;
+        window.sendNotifications = sendNotifications;
+        window.refreshData = refreshData;
+
+        // 실시간 지원자 요소 업데이트 (승인 시)
+        function updateApplicantElementRealtime(id, newStatus) {
+            console.log('실시간 UI 업데이트 시작:', id, newStatus);
+            
+            const applicantElement = document.querySelector(`[data-id="${id}"]`);
+            if (!applicantElement) {
+                console.error('지원자 요소를 찾을 수 없습니다:', id);
+                return;
+            }
+            
+            // 승인 애니메이션 클래스 추가
+            applicantElement.classList.add('approved-animation');
+            
+            // 상태 배지 업데이트
+            const statusBadge = applicantElement.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = 'status-badge status-approved';
+                statusBadge.textContent = '승인 완료';
+                console.log('상태 배지 업데이트 완료');
+            }
+            
+            // 액션 버튼들을 애니메이션과 함께 제거
+            const actionButtons = applicantElement.querySelector('.action-buttons');
+            if (actionButtons) {
+                actionButtons.classList.add('removing');
+                setTimeout(() => {
+                    actionButtons.remove();
+                    console.log('액션 버튼 제거 완료');
+                }, 300);
+            }
+            
+            // 데이터 속성 업데이트
+            applicantElement.setAttribute('data-status', 'approved');
+            
+            // 애니메이션 완료 후 클래스 제거
+            setTimeout(() => {
+                applicantElement.classList.remove('approved-animation');
+            }, 2000);
+            
+            console.log('실시간 UI 업데이트 완료');
+        }
+
+        // 실시간 지원자 요소 제거 (거절 시)
+        function removeApplicantElementRealtime(id) {
+            console.log('실시간 요소 제거 시작:', id);
+            
+            const applicantElement = document.querySelector(`[data-id="${id}"]`);
+            if (!applicantElement) {
+                console.error('지원자 요소를 찾을 수 없습니다:', id);
+                return;
+            }
+            
+            // 거절 애니메이션 클래스 추가
+            applicantElement.classList.add('rejected-animation');
+            
+            // 애니메이션 완료 후 요소 제거
+            setTimeout(() => {
+                applicantElement.remove();
+                console.log('요소 제거 완료');
+                
+                // 남은 지원자가 없으면 빈 상태 표시
+                checkAndShowEmptyState();
+            }, 300);
+        }
+
+        // 빈 상태 확인 및 표시
+        function checkAndShowEmptyState() {
+            const applicantList = document.getElementById('applicant-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (applicantList && applicantList.children.length === 0) {
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                    console.log('빈 상태 표시');
+                }
+            }
+        }
+
+        // 고유 인증코드 생성
+        function generateUniqueAuthCode() {
+            const prefix = 'VOCAL';
+            const timestamp = Date.now().toString().slice(-6); // 마지막 6자리
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+            return `${prefix}${timestamp}${random}`;
+        }
+
+        // 승인 알림 발송 (통합 함수)
+        function sendApprovalNotification(applicant, authCode) {
+            console.log('인증코드 발송 시작:', applicant.name, authCode);
+            
+            // 발송 방법 선택 (설정에서 변경 가능)
+            const notificationMethod = getNotificationMethod();
+            
+            switch(notificationMethod) {
+                case 'email':
+                    sendApprovalEmail(applicant, authCode);
+                    break;
+                case 'sms':
+                    sendApprovalSMS(applicant, authCode);
+                    break;
+                case 'kakao':
+                    sendKakaoNotification(applicant, authCode);
+                    break;
+                case 'manual':
+                default:
+                    showManualCodeModal(applicant, authCode);
+                    break;
+            }
+        }
+
+        // 알림 방법 설정 가져오기
+        function getNotificationMethod() {
+            return localStorage.getItem('notificationMethod') || 'manual';
+        }
+
+        // 이메일 발송 (EmailJS 사용 예시)
+        function sendApprovalEmail(applicant, authCode) {
+            console.log('이메일 발송:', applicant.email);
+            
+            // EmailJS나 서버 API 호출
+            // 실제 구현시 EmailJS 또는 백엔드 API 연동 필요
+            
+            // 임시: 콘솔에 이메일 내용 표시
+            const emailContent = `
+📧 이메일 발송 내용:
+받는 사람: ${applicant.email}
+제목: [대주가요] 보컬 오디션 합격 안내
+
+${applicant.name}님, 축하합니다! 🎉
+
+대주가요 시즌2 보컬 오디션에 합격하셨습니다.
+공연 참여 신청시 아래 인증코드를 입력해주세요.
+
+인증코드: ${authCode}
+
+공연 참여 신청: https://daejugayo.com
+문의: playlogsoundlab@gmail.com
+
+PLAYLOG SOUNDLAB
+            `;
+            
+            console.log(emailContent);
+            
+            // 실제 이메일 발송 시뮬레이션
+            simulateEmailSending(applicant, authCode, emailContent);
+        }
+
+        // SMS 발송
+        function sendApprovalSMS(applicant, authCode) {
+            console.log('SMS 발송:', applicant.phone);
+            
+            const smsContent = `안녕하세요
+대주가요입니다!
+${applicant.name}님 축하합니다! 보컬 지원 합격!
+인증코드: ${authCode}
+공연신청 안내
+[웹사이트주소]를 접속 후 공연신청가능합니다!`;
+            
+            console.log('📱 SMS 발송 내용:', smsContent);
+            
+            // 실제 SMS 발송 시뮬레이션
+            simulateSMSSending(applicant, authCode, smsContent);
+        }
+
+        // 카카오톡 알림톡 발송
+        function sendKakaoNotification(applicant, authCode) {
+            console.log('카카오톡 알림톡 발송:', applicant.phone);
+            
+            const kakaoContent = `🎤 대주가요 합격 안내
+
+${applicant.name}님, 축하드립니다!
+보컬 오디션에 합격하셨습니다.
+
+📝 인증코드: ${authCode}
+🗓 공연 신청: 웹사이트 접속 후 진행
+📧 문의: playlogsoundlab@gmail.com
+
+PLAYLOG SOUNDLAB`;
+            
+            console.log('💬 카카오톡 내용:', kakaoContent);
+            
+            // 실제 카카오톡 발송 시뮬레이션
+            simulateKakaoSending(applicant, authCode, kakaoContent);
+        }
+
+        // 수동 코드 모달 표시
+        function showManualCodeModal(applicant, authCode) {
+            const modalContent = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; margin: 20px;">
+                    <h3 style="color: #4a5568; margin-bottom: 20px;">✅ ${applicant.name}님 승인 완료</h3>
+                    
+                    <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #2d3748; margin-bottom: 10px;">📋 발송할 내용</h4>
+                        <p><strong>연락처:</strong> ${applicant.phone}</p>
+                        <p><strong>이메일:</strong> ${applicant.email}</p>
+                        <p><strong>인증코드:</strong> <span style="font-size: 1.2em; color: #e53e3e; font-weight: bold;">${authCode}</span></p>
+                    </div>
+                    
+                    <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <p style="margin: 0; color: #2c7a7b;">
+                            📱 <strong>권장 발송 메시지:</strong><br>
+                            "안녕하세요<br>대주가요입니다!<br>${applicant.name}님 축하합니다! 보컬 지원 합격!<br>인증코드: ${authCode}<br>공연신청 안내<br>[웹사이트주소]를 접속 후 공연신청가능합니다!"
+                        </p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="copyToClipboard('${authCode}')" style="flex: 1; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            📋 인증코드 복사
+                        </button>
+                        <button onclick="copyToClipboard('안녕하세요\n대주가요입니다!\n${applicant.name}님 축하합니다! 보컬 지원 합격!\n인증코드: ${authCode}\n공연신청 안내\n[웹사이트주소]를 접속 후 공연신청가능합니다!')" style="flex: 2; padding: 12px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            💬 메시지 복사
+                        </button>
+                        <button onclick="closeManualCodeModal()" style="flex: 1; padding: 12px; background: #a0aec0; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // 모달 배경 생성
+            const modalBg = document.createElement('div');
+            modalBg.id = 'manual-code-modal';
+            modalBg.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000;
+            `;
+            modalBg.innerHTML = modalContent;
+            
+            document.body.appendChild(modalBg);
+        }
+
+        // 클립보드 복사
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('클립보드에 복사되었습니다!', 'success');
+            }).catch(() => {
+                // 클립보드 API 실패시 대체 방법
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('클립보드에 복사되었습니다!', 'success');
+            });
+        }
+
+        // 수동 코드 모달 닫기
+        function closeManualCodeModal() {
+            const modal = document.getElementById('manual-code-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 발송 시뮬레이션 함수들
+        function simulateEmailSending(applicant, authCode, content) {
+            setTimeout(() => {
+                console.log('✅ 이메일 발송 완료 (시뮬레이션)');
+                addRecentActivity(`📧 ${applicant.name}님께 이메일 발송 완료`, '방금 전');
+            }, 1000);
+        }
+
+        function simulateSMSSending(applicant, authCode, content) {
+            setTimeout(() => {
+                console.log('✅ SMS 발송 완료 (시뮬레이션)');
+                addRecentActivity(`📱 ${applicant.name}님께 SMS 발송 완료`, '방금 전');
+            }, 800);
+        }
+
+        function simulateKakaoSending(applicant, authCode, content) {
+            setTimeout(() => {
+                console.log('✅ 카카오톡 발송 완료 (시뮬레이션)');
+                addRecentActivity(`💬 ${applicant.name}님께 카카오톡 발송 완료`, '방금 전');
+            }, 1200);
+        }
+
+        // 알림 방법 설정 모달 표시
+        function showNotificationSettings() {
+            const currentMethod = getNotificationMethod();
+            
+            const modalContent = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 600px; margin: 20px;">
+                    <h3 style="color: #4a5568; margin-bottom: 20px;">⚙️ 승인 알림 방법 설정</h3>
+                    
+                    <div style="margin-bottom: 25px;">
+                        <p style="color: #718096; margin-bottom: 15px;">지원자 승인 시 인증코드를 어떤 방법으로 발송할지 선택하세요.</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; ${currentMethod === 'manual' ? 'background: #e6fffa; border-color: #38b2ac;' : ''}">
+                                <input type="radio" name="notificationMethod" value="manual" ${currentMethod === 'manual' ? 'checked' : ''} style="margin-right: 15px;">
+                                <div>
+                                    <strong>📋 수동 발송 (현재 추천)</strong>
+                                    <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">승인 시 모달창에 인증코드와 메시지가 표시됩니다. 복사해서 직접 연락하세요.</p>
+                                </div>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; ${currentMethod === 'email' ? 'background: #e6fffa; border-color: #38b2ac;' : ''}">
+                                <input type="radio" name="notificationMethod" value="email" ${currentMethod === 'email' ? 'checked' : ''} style="margin-right: 15px;">
+                                <div>
+                                    <strong>📧 이메일 자동 발송</strong>
+                                    <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">EmailJS 연동 필요. 자동으로 이메일이 발송됩니다.</p>
+                                    <p style="margin: 2px 0 0 0; color: #f56565; font-size: 0.8em;">⚠️ 추가 설정 필요</p>
+                                </div>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; ${currentMethod === 'sms' ? 'background: #e6fffa; border-color: #38b2ac;' : ''}">
+                                <input type="radio" name="notificationMethod" value="sms" ${currentMethod === 'sms' ? 'checked' : ''} style="margin-right: 15px;">
+                                <div>
+                                    <strong>📱 SMS 자동 발송</strong>
+                                    <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">SMS API 연동 필요. 휴대폰으로 문자가 발송됩니다.</p>
+                                    <p style="margin: 2px 0 0 0; color: #f56565; font-size: 0.8em;">⚠️ 추가 설정 및 비용 필요</p>
+                                </div>
+                            </label>
+                            
+                            <label style="display: flex; align-items: center; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; ${currentMethod === 'kakao' ? 'background: #e6fffa; border-color: #38b2ac;' : ''}">
+                                <input type="radio" name="notificationMethod" value="kakao" ${currentMethod === 'kakao' ? 'checked' : ''} style="margin-right: 15px;">
+                                <div>
+                                    <strong>💬 카카오톡 알림톡</strong>
+                                    <p style="margin: 5px 0 0 0; color: #718096; font-size: 0.9em;">카카오 비즈니스 API 연동 필요. 가장 효과적인 방법입니다.</p>
+                                    <p style="margin: 2px 0 0 0; color: #f56565; font-size: 0.8em;">⚠️ 사업자 등록 및 승인 필요</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <h4 style="color: #4a5568; margin-bottom: 10px;">💡 구현 가이드</h4>
+                        <ul style="color: #718096; margin: 0; padding-left: 20px;">
+                            <li><strong>이메일:</strong> EmailJS (무료) 또는 SendGrid API 연동</li>
+                            <li><strong>SMS:</strong> 알리고, 쿨SMS, NCP SENS API 연동</li>
+                            <li><strong>카카오톡:</strong> 카카오 비즈니스 계정 + 알림톡 템플릿 승인</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button onclick="saveNotificationSettings()" style="flex: 1; padding: 12px; background: #48bb78; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            ✅ 설정 저장
+                        </button>
+                        <button onclick="closeNotificationSettings()" style="flex: 1; padding: 12px; background: #a0aec0; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            취소
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const modalBg = document.createElement('div');
+            modalBg.id = 'notification-settings-modal';
+            modalBg.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000; overflow-y: auto; padding: 20px;
+            `;
+            modalBg.innerHTML = modalContent;
+            
+            document.body.appendChild(modalBg);
+        }
+
+        // 알림 방법 설정 저장
+        function saveNotificationSettings() {
+            const selectedMethod = document.querySelector('input[name="notificationMethod"]:checked')?.value;
+            
+            if (selectedMethod) {
+                localStorage.setItem('notificationMethod', selectedMethod);
+                
+                const methodNames = {
+                    'manual': '수동 발송',
+                    'email': '이메일 자동 발송',
+                    'sms': 'SMS 자동 발송',
+                    'kakao': '카카오톡 알림톡'
+                };
+                
+                showNotification(`알림 방법이 "${methodNames[selectedMethod]}"로 설정되었습니다.`, 'success');
+                addRecentActivity(`알림 방법 변경: ${methodNames[selectedMethod]}`, '방금 전');
+                
+                console.log('알림 방법 설정 저장:', selectedMethod);
+            }
+            
+            closeNotificationSettings();
+        }
+
+        // 알림 방법 설정 모달 닫기
+        function closeNotificationSettings() {
+            const modal = document.getElementById('notification-settings-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // 일괄 알림 발송 모달 표시
+        function showBulkNotificationModal(pendingApplicants, approvedApplicants) {
+            // 승인된 지원자 중 인증코드가 없는 경우 자동 생성
+            const approvedWithoutCode = approvedApplicants.filter(a => !a.authCode || a.authCode === '코드없음');
+            if (approvedWithoutCode.length > 0) {
+                console.log(`인증코드가 없는 승인 지원자 ${approvedWithoutCode.length}명 발견, 자동 생성 중...`);
+                approvedWithoutCode.forEach(applicant => {
+                    applicant.authCode = generateUniqueAuthCode();
+                    console.log(`${applicant.name}님에게 인증코드 자동 생성: ${applicant.authCode}`);
+                });
+                saveData(); // 즉시 저장
+                showNotification(`${approvedWithoutCode.length}명에게 인증코드를 자동 생성했습니다.`, 'info');
+            }
+            
+            const totalCount = pendingApplicants.length + approvedApplicants.length;
+            
+            let approvedSection = '';
+            if (approvedApplicants.length > 0) {
+                const approvedList = approvedApplicants.map(a => `
+                    <div style="background: #f0fff4; padding: 12px; border-radius: 8px; margin: 8px 0; border-left: 4px solid #38a169;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${a.name}</strong> (${a.phone})
+                                <br><small style="color: #718096;">${a.email}</small>
+                                <div style="background: #e6fffa; padding: 8px; border-radius: 4px; margin-top: 8px; font-size: 0.85em; color: #2c7a7b;">
+                                    💬 메시지: "안녕하세요 대주가요입니다! ${a.name}님 축하합니다! 보컬 지원 합격! 인증코드: ${a.authCode} 공연신청 안내 [웹사이트주소]를 접속 후 공연신청가능합니다!"
+                                </div>
+                            </div>
+                            <div style="background: #38a169; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.9em;">
+                                <strong>${a.authCode}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                approvedSection = `
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="color: #38a169; margin-bottom: 15px;">✅ 승인된 지원자 (${approvedApplicants.length}명)</h4>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            ${approvedList}
+                        </div>
+                        <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <p style="margin: 0; color: #2c7a7b; font-size: 0.9em;">
+                                💬 <strong>승인 메시지 템플릿 예시:</strong><br>
+                                "안녕하세요<br>대주가요입니다!<br>[이름]님 축하합니다! 보컬 지원 합격!<br>인증코드: [코드]<br>공연신청 안내<br>[웹사이트주소]를 접속 후 공연신청가능합니다!"
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let pendingSection = '';
+            if (pendingApplicants.length > 0) {
+                const pendingList = pendingApplicants.map(a => `
+                    <div style="background: #fffaf0; padding: 12px; border-radius: 8px; margin: 8px 0; border-left: 4px solid #ed8936;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${a.name}</strong> (${a.phone})
+                                <br><small style="color: #718096;">${a.email}</small>
+                            </div>
+                            <div style="background: #ed8936; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.9em;">
+                                심사중
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                pendingSection = `
+                    <div style="margin-bottom: 25px;">
+                        <h4 style="color: #ed8936; margin-bottom: 15px;">⏳ 심사 대기 중인 지원자 (${pendingApplicants.length}명)</h4>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            ${pendingList}
+                        </div>
+                        <div style="background: #fef5e7; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <p style="margin: 0; color: #c05621; font-size: 0.9em;">
+                                💬 <strong>대기 메시지 템플릿:</strong><br>
+                                "[대주가요] [이름]님 지원서가 접수되었습니다. 심사 결과는 개별 연락드리겠습니다. 감사합니다!"
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const modalContent = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 700px; margin: 20px; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="color: #4a5568; margin-bottom: 20px;">📧 일괄 결과 알림 발송</h3>
+                    
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <p style="margin: 0; color: #4a5568;">
+                            총 <strong>${totalCount}명</strong>의 지원자에게 결과 알림을 발송합니다.
+                        </p>
+                    </div>
+                    
+                    ${approvedSection}
+                    ${pendingSection}
+                    
+                    <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <h4 style="color: #2c7a7b; margin-bottom: 10px;">📱 발송 방법</h4>
+                        <p style="margin: 0; color: #2c7a7b; font-size: 0.9em;">
+                            현재 설정: <strong>${getNotificationMethodName()}</strong><br>
+                            각 지원자의 연락처와 메시지를 복사하여 개별 발송하거나, 
+                            자동 발송이 설정된 경우 일괄 처리됩니다.
+                        </p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button onclick="copyAllApprovedMessages()" style="flex: 1; padding: 12px; background: #38a169; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            📋 승인 메시지 모두 복사
+                        </button>
+                        <button onclick="copyAllPendingMessages()" style="flex: 1; padding: 12px; background: #ed8936; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            📋 대기 메시지 모두 복사
+                        </button>
+                        <button onclick="processBulkNotifications()" style="flex: 1; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            🚀 일괄 발송 처리
+                        </button>
+                        <button onclick="closeBulkNotificationModal()" style="flex: 1; padding: 12px; background: #a0aec0; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            const modalBg = document.createElement('div');
+            modalBg.id = 'bulk-notification-modal';
+            modalBg.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+                z-index: 1000; overflow-y: auto; padding: 20px;
+            `;
+            modalBg.innerHTML = modalContent;
+            
+            document.body.appendChild(modalBg);
+            
+            // 전역 변수에 데이터 저장 (복사 함수에서 사용)
+            window.currentPendingApplicants = pendingApplicants;
+            window.currentApprovedApplicants = approvedApplicants;
+        }
+
+        // 알림 방법 이름 가져오기
+        function getNotificationMethodName() {
+            const method = getNotificationMethod();
+            const methodNames = {
+                'manual': '수동 발송',
+                'email': '이메일 자동 발송',
+                'sms': 'SMS 자동 발송',
+                'kakao': '카카오톡 알림톡'
+            };
+            return methodNames[method] || '수동 발송';
+        }
+
+        // 승인 메시지 모두 복사
+        function copyAllApprovedMessages() {
+            // 인증코드가 없는 경우 먼저 생성
+            if (window.currentApprovedApplicants) {
+                window.currentApprovedApplicants.forEach(applicant => {
+                    if (!applicant.authCode || applicant.authCode === '코드없음') {
+                        applicant.authCode = generateUniqueAuthCode();
+                        console.log(`${applicant.name}님에게 인증코드 생성: ${applicant.authCode}`);
+                        
+                        // 원본 데이터도 업데이트
+                        const originalApplicant = applicantsData.find(a => a.id === applicant.id);
+                        if (originalApplicant) {
+                            originalApplicant.authCode = applicant.authCode;
+                        }
+                    }
+                });
+                saveData(); // 변경사항 저장
+            }
+            
+            const messages = window.currentApprovedApplicants?.map(a => 
+                `안녕하세요
+대주가요입니다!
+${a.name}님 축하합니다! 보컬 지원 합격!
+인증코드: ${a.authCode}
+공연신청 안내
+[웹사이트주소]를 접속 후 공연신청가능합니다! (${a.phone})`
+            ).join('\n\n') || '';
+            
+            if (messages) {
+                copyToClipboard(messages);
+                showNotification(`${window.currentApprovedApplicants.length}명의 승인 메시지를 복사했습니다!`, 'success');
+            } else {
+                showNotification('복사할 승인 메시지가 없습니다.', 'warning');
+            }
+        }
+
+        // 대기 메시지 모두 복사
+        function copyAllPendingMessages() {
+            const messages = window.currentPendingApplicants?.map(a => 
+                `[대주가요] ${a.name}님 지원서가 접수되었습니다. 심사 결과는 개별 연락드리겠습니다. 감사합니다! (${a.phone})`
+            ).join('\n\n') || '';
+            
+            if (messages) {
+                copyToClipboard(messages);
+                showNotification(`${window.currentPendingApplicants.length}명의 대기 메시지를 복사했습니다!`, 'success');
+            } else {
+                showNotification('복사할 대기 메시지가 없습니다.', 'warning');
+            }
+        }
+
+        // 일괄 알림 처리
+        function processBulkNotifications() {
+            const method = getNotificationMethod();
+            const totalCount = (window.currentPendingApplicants?.length || 0) + (window.currentApprovedApplicants?.length || 0);
+            
+            if (method === 'manual') {
+                showNotification('수동 발송 모드입니다. 메시지를 복사하여 개별 발송해주세요.', 'warning');
+                return;
+            }
+            
+            // 자동 발송 시뮬레이션
+            let processedCount = 0;
+            
+            // 승인된 지원자들에게 발송
+            window.currentApprovedApplicants?.forEach(applicant => {
+                setTimeout(() => {
+                    sendApprovalNotification(applicant, applicant.authCode || generateUniqueAuthCode());
+                    processedCount++;
+                }, processedCount * 500); // 0.5초 간격으로 발송
+            });
+            
+            // 대기 중인 지원자들에게 접수 확인 발송
+            window.currentPendingApplicants?.forEach(applicant => {
+                setTimeout(() => {
+                    sendPendingNotification(applicant);
+                    processedCount++;
+                }, processedCount * 500); // 0.5초 간격으로 발송
+            });
+            
+            closeBulkNotificationModal();
+            showNotification(`${totalCount}명에게 일괄 알림 발송을 시작했습니다.`, 'success');
+            addRecentActivity(`일괄 알림 발송 (${totalCount}명)`, '방금 전');
+        }
+
+        // 대기 지원자 알림 발송
+        function sendPendingNotification(applicant) {
+            const message = `[대주가요] ${applicant.name}님 지원서가 접수되었습니다. 심사 결과는 개별 연락드리겠습니다. 감사합니다!`;
+            
+            // 실제 발송 시뮬레이션
+            console.log('대기 알림 발송:', applicant.name, message);
+            addRecentActivity(`📱 ${applicant.name}님께 접수 확인 발송`, '방금 전');
+        }
+
+        // 일괄 알림 모달 닫기
+        function closeBulkNotificationModal() {
+            const modal = document.getElementById('bulk-notification-modal');
+            if (modal) {
+                modal.remove();
+            }
+            // 전역 변수 정리
+            window.currentPendingApplicants = null;
+            window.currentApprovedApplicants = null;
+        }
 
         // 지원자 목록 로드
         function loadApplicants() {
+            console.log('지원자 목록 로드 시작:', applicantsData.length, '명');
+            
+            // 승인된 지원자 중 인증코드가 없는 경우 자동 생성
+            let needUpdate = false;
+            applicantsData.forEach(applicant => {
+                if (applicant.status === 'approved' && (!applicant.authCode || applicant.authCode === '코드없음')) {
+                    applicant.authCode = generateUniqueAuthCode();
+                    console.log(`${applicant.name}님에게 인증코드 자동 생성: ${applicant.authCode}`);
+                    needUpdate = true;
+                }
+            });
+            
+            if (needUpdate) {
+                saveData();
+                console.log('인증코드 없는 승인 지원자들에게 코드 자동 생성 완료');
+            }
+            
             const applicantList = document.getElementById('applicant-list');
             const emptyState = document.getElementById('empty-state');
             
             if (applicantsData.length === 0) {
                 emptyState.style.display = 'block';
+                console.log('지원자 없음 - 빈 상태 표시');
                 return;
             }
             
             emptyState.style.display = 'none';
             
             applicantList.innerHTML = '';
+            let displayedCount = 0;
             applicantsData.forEach(applicant => {
                 if (applicant.status !== 'rejected') {
                     const applicantElement = createApplicantElement(applicant);
                     applicantList.appendChild(applicantElement);
+                    displayedCount++;
+                    console.log('지원자 표시:', applicant.name, '상태:', applicant.status);
                 }
             });
+            
+            console.log('지원자 목록 로드 완료:', displayedCount, '명 표시');
         }
 
         // 지원자 요소 생성
@@ -617,46 +1397,6 @@
             `;
             
             return div;
-        }
-
-        // 새 지원자 추가 (시뮬레이션 - 실제로는 외부 폼에서 데이터가 들어옴)
-        function addTestApplicant() {
-            const names = ['김보컬', '이가수', '박아티스트', '최뮤지션', '정싱어', '한보이스'];
-            const genres = ['팝', 'R&B', '인디', '발라드', '록', '재즈'];
-            const songs = ['좋은 날 - 아이유', 'Through the Night - 아이유', '사랑한다 안한다 - 윤하', '호텔 델루나 - 아이유', '밤편지 - 아이유', '봄날 - BTS'];
-            const phones = ['010-1234-5678', '010-9876-5432', '010-5555-1234', '010-7777-8888'];
-            const emails = ['vocal@email.com', 'singer@gmail.com', 'artist@naver.com', 'musician@daum.net'];
-            const experiences = ['1년 미만', '1-2년', '3-5년', '5년 이상'];
-            const motivations = [
-                '음악에 대한 열정이 넘치고, 더 많은 사람들에게 제 목소리를 들려주고 싶습니다.',
-                '어릴 때부터 꿈꿔온 가수의 꿈을 이루고 싶어 지원하게 되었습니다.',
-                '다양한 장르의 음악을 도전해보고 성장하고 싶습니다.',
-                '팀워크를 중시하며 함께 음악을 만들어가고 싶습니다.'
-            ];
-            
-            const newApplicant = {
-                id: Date.now(),
-                name: names[Math.floor(Math.random() * names.length)],
-                age: Math.floor(Math.random() * 10) + 20,
-                phone: phones[Math.floor(Math.random() * phones.length)],
-                email: emails[Math.floor(Math.random() * emails.length)],
-                genre: genres[Math.floor(Math.random() * genres.length)],
-                song: songs[Math.floor(Math.random() * songs.length)],
-                experience: experiences[Math.floor(Math.random() * experiences.length)],
-                motivation: motivations[Math.floor(Math.random() * motivations.length)],
-                skills: ['발성', '화음', '즉흥연주'].slice(0, Math.floor(Math.random() * 3) + 1),
-                availableTime: ['평일 저녁', '주말'][Math.floor(Math.random() * 2)],
-                status: 'pending',
-                date: new Date().toLocaleDateString('ko-KR'),
-                submitTime: new Date().toLocaleString('ko-KR')
-            };
-            
-            applicantsData.push(newApplicant);
-            saveData();
-            loadApplicants();
-            updateCounts();
-            addRecentActivity(`${newApplicant.name}님 지원 접수`, '방금 전');
-            showNotification('새 지원자가 추가되었습니다.', 'success');
         }
 
         // 관리자 접근 권한 확인
@@ -707,35 +1447,122 @@
 
         // 지원자 승인
         function approveApplicant(id) {
+            console.log('승인 요청:', id);
             const applicant = applicantsData.find(a => a.id === id);
-            if (applicant) {
+            
+            if (applicant && applicant.status !== 'approved') {
+                console.log('승인 처리 시작:', applicant.name);
+                
+                // 즉시 버튼 비활성화 (중복 클릭 방지)
+                const approveBtn = document.querySelector(`button[onclick="approveApplicant(${id})"]`);
+                const rejectBtn = document.querySelector(`button[onclick="rejectApplicant(${id})"]`);
+                
+                if (approveBtn) {
+                    approveBtn.disabled = true;
+                    approveBtn.textContent = '승인 중...';
+                    approveBtn.style.opacity = '0.6';
+                }
+                if (rejectBtn) {
+                    rejectBtn.disabled = true;
+                    rejectBtn.style.opacity = '0.6';
+                }
+                
+                // 인증코드 생성
+                const authCode = generateUniqueAuthCode();
+                
+                // 데이터 업데이트
                 applicant.status = 'approved';
+                applicant.approvedDate = new Date().toLocaleDateString('ko-KR');
+                applicant.authCode = authCode; // 인증코드 저장
+                
+                // 실시간 UI 업데이트 (전체 재로드 없이)
+                setTimeout(() => {
+                    updateApplicantElementRealtime(id, 'approved');
+                }, 100); // 약간의 지연으로 더 자연스럽게
+                
+                // 데이터 저장
                 saveData();
-                loadApplicants();
+                
+                // 통계만 업데이트 (목록 재로드 없이)
                 updateCounts();
-                addRecentActivity(`${applicant.name}님 승인 완료`, '방금 전');
-                showNotification('지원자를 승인했습니다.', 'success');
+                
+                // 인증코드 발송 (선택된 방법에 따라)
+                sendApprovalNotification(applicant, authCode);
+                
+                // 활동 로그 및 알림
+                addRecentActivity(`${applicant.name}님 승인 완료 (코드: ${authCode})`, '방금 전');
+                showNotification(`${applicant.name}님을 승인하고 인증코드를 발송했습니다.`, 'success');
+                
+                console.log('승인 완료 - 실시간 업데이트:', applicant.name, '인증코드:', authCode);
+            } else {
+                console.log('승인 불가:', applicant ? '이미 승인됨' : '지원자를 찾을 수 없음');
+                if (applicant && applicant.status === 'approved') {
+                    showNotification('이미 승인된 지원자입니다.', 'warning');
+                }
             }
         }
 
         // 지원자 거절
         function rejectApplicant(id) {
+            console.log('거절 요청:', id);
             const applicant = applicantsData.find(a => a.id === id);
-            if (applicant && confirm(`${applicant.name}님을 거절하시겠습니까?`)) {
-                applicant.status = 'rejected';
-                rejectedCount++;
-                saveData();
-                loadApplicants();
-                updateCounts();
-                addRecentActivity(`${applicant.name}님 거절 처리`, '방금 전');
-                showNotification('지원자를 거절했습니다.', 'warning');
+            
+            if (applicant && applicant.status !== 'rejected') {
+                if (confirm(`${applicant.name}님을 거절하시겠습니까?`)) {
+                    console.log('거절 처리 시작:', applicant.name);
+                    
+                    // 즉시 버튼 비활성화 (중복 클릭 방지)
+                    const approveBtn = document.querySelector(`button[onclick="approveApplicant(${id})"]`);
+                    const rejectBtn = document.querySelector(`button[onclick="rejectApplicant(${id})"]`);
+                    
+                    if (approveBtn) {
+                        approveBtn.disabled = true;
+                        approveBtn.style.opacity = '0.6';
+                    }
+                    if (rejectBtn) {
+                        rejectBtn.disabled = true;
+                        rejectBtn.textContent = '거절 중...';
+                        rejectBtn.style.opacity = '0.6';
+                    }
+                    
+                    // 데이터 업데이트
+                    applicant.status = 'rejected';
+                    applicant.rejectedDate = new Date().toLocaleDateString('ko-KR');
+                    
+                    // 실시간 UI 업데이트 (요소 제거)
+                    setTimeout(() => {
+                        removeApplicantElementRealtime(id);
+                    }, 100);
+                    
+                    // 데이터 저장
+                    saveData();
+                    
+                    // 통계만 업데이트
+                    updateCounts();
+                    
+                    // 활동 로그 및 알림
+                    addRecentActivity(`${applicant.name}님 거절 처리`, '방금 전');
+                    showNotification('지원자를 거절했습니다.', 'warning');
+                    
+                    console.log('거절 완료 - 실시간 업데이트:', applicant.name);
+                } else {
+                    console.log('거절 취소됨');
+                }
+            } else {
+                console.log('거절 불가:', applicant ? '이미 거절됨' : '지원자를 찾을 수 없음');
+                if (applicant && applicant.status === 'rejected') {
+                    showNotification('이미 거절된 지원자입니다.', 'warning');
+                }
             }
         }
 
         // 데이터 저장
         function saveData() {
             localStorage.setItem('applicantsData', JSON.stringify(applicantsData));
-            localStorage.setItem('rejectedCount', rejectedCount.toString());
+            // rejectedCount는 실제 데이터에서 계산하여 저장
+            const actualRejectedCount = applicantsData.filter(a => a.status === 'rejected').length;
+            localStorage.setItem('rejectedCount', actualRejectedCount.toString());
+            console.log('데이터 저장 완료, rejectedCount:', actualRejectedCount);
         }
 
         // 통계 업데이트
@@ -743,67 +1570,132 @@
             const total = applicantsData.filter(a => a.status !== 'rejected').length;
             const approved = applicantsData.filter(a => a.status === 'approved').length;
             const pending = applicantsData.filter(a => a.status === 'pending').length;
+            const rejected = applicantsData.filter(a => a.status === 'rejected').length;
             
             document.getElementById('total-count').textContent = total;
             document.getElementById('approved-count').textContent = approved;
             document.getElementById('pending-count').textContent = pending;
-            document.getElementById('rejected-count').textContent = rejectedCount;
+            document.getElementById('rejected-count').textContent = rejected;
+            
+            // rejectedCount 전역 변수도 업데이트
+            rejectedCount = rejected;
+            
+            console.log('통계 업데이트:', { total, approved, pending, rejected });
         }
 
         // 최근 활동 추가
         function addRecentActivity(activity, time) {
-            const recentActivity = document.getElementById('recent-activity');
-            const activities = recentActivity.children;
-            
-            // 새 활동 추가
-            const newActivity = document.createElement('p');
-            newActivity.innerHTML = `<strong>${activity}</strong> <span style="color: #718096;">(${time})</span>`;
-            newActivity.style.marginBottom = '8px';
-            
-            // 맨 위에 추가
-            if (activities.length > 0 && activities[0].style.color !== '#718096') {
-                recentActivity.insertBefore(newActivity, recentActivity.firstChild);
-            } else {
-                recentActivity.innerHTML = '';
-                recentActivity.appendChild(newActivity);
-            }
-            
-            // 최대 5개까지만 표시
-            while (recentActivity.children.length > 5) {
-                recentActivity.removeChild(recentActivity.lastChild);
+            try {
+                console.log('addRecentActivity 호출:', activity, time);
+                const recentActivity = document.getElementById('recent-activity');
+                
+                if (!recentActivity) {
+                    console.error('recent-activity 요소를 찾을 수 없습니다');
+                    return;
+                }
+                
+                const activities = recentActivity.children;
+                
+                // 새 활동 추가
+                const newActivity = document.createElement('p');
+                newActivity.innerHTML = `<strong>${activity}</strong> <span style="color: #718096;">(${time})</span>`;
+                newActivity.style.marginBottom = '8px';
+                
+                // 맨 위에 추가
+                if (activities.length > 0 && activities[0].style.color !== '#718096') {
+                    recentActivity.insertBefore(newActivity, recentActivity.firstChild);
+                } else {
+                    recentActivity.innerHTML = '';
+                    recentActivity.appendChild(newActivity);
+                }
+                
+                // 최대 5개까지만 표시
+                while (recentActivity.children.length > 5) {
+                    recentActivity.removeChild(recentActivity.lastChild);
+                }
+                
+                console.log('최근 활동 추가 완료');
+            } catch (error) {
+                console.error('최근 활동 추가 중 오류:', error);
             }
         }
 
         // 알림 표시
         function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
+            try {
+                console.log('showNotification 호출:', message, type);
+                const notification = document.getElementById('notification');
+                
+                if (!notification) {
+                    console.error('notification 요소를 찾을 수 없습니다');
+                    // 대체 알림 방법
+                    alert(message);
+                    return;
+                }
+                
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.style.display = 'block';
+                
+                console.log('알림 표시 완료');
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                    console.log('알림 자동 숨김 완료');
+                }, 3000);
+            } catch (error) {
+                console.error('알림 표시 중 오류:', error);
+                // 대체 알림 방법
+                alert(message);
+            }
         }
 
         // 빠른 작업 함수들
         function generateAuthCode() {
-            const code = 'VOCAL' + Math.random().toString(36).substr(2, 6).toUpperCase();
-            showNotification(`인증 코드가 생성되었습니다: ${code}`, 'success');
-            addRecentActivity('인증 코드 생성', '방금 전');
+            console.log('인증코드 생성 시작');
+            
+            // 승인된 지원자 중 인증코드가 없는 경우 찾기
+            const approvedWithoutCode = applicantsData.filter(a => 
+                a.status === 'approved' && (!a.authCode || a.authCode === '코드없음')
+            );
+            
+            if (approvedWithoutCode.length === 0) {
+                showNotification('모든 승인된 지원자에게 이미 인증코드가 있습니다.', 'info');
+                return;
+            }
+            
+            // 인증코드가 없는 승인된 지원자들에게 코드 생성
+            let generatedCount = 0;
+            approvedWithoutCode.forEach(applicant => {
+                const authCode = generateUniqueAuthCode();
+                applicant.authCode = authCode;
+                console.log(`${applicant.name}님에게 인증코드 생성: ${authCode}`);
+                generatedCount++;
+            });
+            
+            // 데이터 저장
+            saveData();
+            
+            // UI 업데이트
+            loadApplicants();
+            
+            showNotification(`${generatedCount}명의 승인된 지원자에게 인증코드를 생성했습니다.`, 'success');
+            addRecentActivity(`인증코드 ${generatedCount}개 생성`, '방금 전');
+            
+            console.log('인증코드 생성 완료:', generatedCount, '개');
         }
 
         function sendNotifications() {
-            const pendingCount = applicantsData.filter(a => a.status === 'pending').length;
-            const approvedCount = applicantsData.filter(a => a.status === 'approved').length;
+            const pendingApplicants = applicantsData.filter(a => a.status === 'pending');
+            const approvedApplicants = applicantsData.filter(a => a.status === 'approved');
             
-            if (pendingCount === 0 && approvedCount === 0) {
+            if (pendingApplicants.length === 0 && approvedApplicants.length === 0) {
                 showNotification('발송할 알림이 없습니다.', 'warning');
                 return;
             }
             
-            showNotification(`${approvedCount + pendingCount}명의 지원자에게 결과 알림을 발송했습니다.`, 'success');
-            addRecentActivity('결과 알림 발송', '방금 전');
+            // 일괄 알림 발송 모달 표시
+            showBulkNotificationModal(pendingApplicants, approvedApplicants);
         }
 
         function exportData() {
@@ -812,25 +1704,155 @@
                 return;
             }
             
-            // CSV 형태로 데이터 생성
+            try {
+                // 엑셀 파일용 데이터 준비
+                const excelData = [];
+                
+                // 헤더 행
+                excelData.push([
+                    'ID', '이름', '나이', '장르', '곡명', '상태', '지원일', 
+                    '연락처', '이메일', '경험사항', '지원동기', '보유기술', 
+                    '가능시간', '제출시간', '인증코드'
+                ]);
+                
+                // 데이터 행들
+                applicantsData.forEach(applicant => {
+                    const statusText = applicant.status === 'approved' ? '승인' : 
+                                     applicant.status === 'pending' ? '심사대기' : '거절';
+                    
+                    const skills = Array.isArray(applicant.skills) ? applicant.skills.join(', ') : (applicant.skills || '');
+                    
+                    excelData.push([
+                        applicant.id || '',
+                        applicant.name || '',
+                        applicant.age || '',
+                        applicant.genre || '',
+                        applicant.song || '',
+                        statusText,
+                        applicant.date || '',
+                        applicant.phone || '',
+                        applicant.email || '',
+                        applicant.experience || '',
+                        applicant.motivation || '',
+                        skills,
+                        applicant.availableTime || '',
+                        applicant.submitTime || '',
+                        applicant.authCode || ''
+                    ]);
+                });
+                
+                // 워크북 생성
+                const workbook = XLSX.utils.book_new();
+                const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+                
+                // 컬럼 너비 설정
+                const columnWidths = [
+                    { wch: 10 }, // ID
+                    { wch: 15 }, // 이름
+                    { wch: 8 },  // 나이
+                    { wch: 12 }, // 장르
+                    { wch: 20 }, // 곡명
+                    { wch: 10 }, // 상태
+                    { wch: 12 }, // 지원일
+                    { wch: 15 }, // 연락처
+                    { wch: 25 }, // 이메일
+                    { wch: 30 }, // 경험사항
+                    { wch: 30 }, // 지원동기
+                    { wch: 20 }, // 보유기술
+                    { wch: 15 }, // 가능시간
+                    { wch: 20 }, // 제출시간
+                    { wch: 15 }  // 인증코드
+                ];
+                worksheet['!cols'] = columnWidths;
+                
+                // 헤더 스타일 설정
+                const headerStyle = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' } },
+                    fill: { fgColor: { rgb: '667eea' } },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                };
+                
+                // 헤더에 스타일 적용
+                const headerRange = XLSX.utils.decode_range('A1:O1');
+                for (let col = headerRange.s.c; col <= headerRange.e.c; col++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+                    if (!worksheet[cellAddress]) continue;
+                    worksheet[cellAddress].s = headerStyle;
+                }
+                
+                // 워크시트를 워크북에 추가
+                XLSX.utils.book_append_sheet(workbook, worksheet, '지원자 목록');
+                
+                // 통계 시트 추가
+                const statsData = [
+                    ['대주가요 지원자 통계'],
+                    [''],
+                    ['구분', '인원수'],
+                    ['총 지원자', applicantsData.length],
+                    ['승인 완료', applicantsData.filter(a => a.status === 'approved').length],
+                    ['심사 대기', applicantsData.filter(a => a.status === 'pending').length],
+                    ['거절', applicantsData.filter(a => a.status === 'rejected').length],
+                    [''],
+                    ['생성일시', new Date().toLocaleString('ko-KR')],
+                    ['관리자', 'PLAYLOG SOUNDLAB']
+                ];
+                
+                const statsWorksheet = XLSX.utils.aoa_to_sheet(statsData);
+                statsWorksheet['!cols'] = [{ wch: 20 }, { wch: 15 }];
+                
+                // 통계 시트 스타일
+                const titleStyle = {
+                    font: { bold: true, size: 16 },
+                    alignment: { horizontal: 'center' }
+                };
+                
+                if (statsWorksheet['A1']) {
+                    statsWorksheet['A1'].s = titleStyle;
+                }
+                
+                XLSX.utils.book_append_sheet(workbook, statsWorksheet, '통계');
+                
+                // 파일명 생성
+                const now = new Date();
+                const fileName = `대주가요_지원자목록_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.xlsx`;
+                
+                // 파일 다운로드
+                XLSX.writeFile(workbook, fileName);
+                
+                showNotification(`지원자 데이터를 Excel 파일로 내보냈습니다. (${applicantsData.length}명)`, 'success');
+                addRecentActivity(`Excel 데이터 내보내기 (${applicantsData.length}명)`, '방금 전');
+                
+                console.log('Excel 파일 생성 완료:', fileName);
+                
+            } catch (error) {
+                console.error('Excel 파일 생성 오류:', error);
+                showNotification('Excel 파일 생성 중 오류가 발생했습니다.', 'error');
+                
+                // 오류 발생시 기존 CSV 방식으로 대체
+                exportDataAsCSV();
+            }
+        }
+        
+        // CSV 백업 내보내기 함수
+        function exportDataAsCSV() {
             const csvContent = [
-                ['이름', '나이', '장르', '곡명', '상태', '지원일'].join(','),
+                ['이름', '나이', '장르', '곡명', '상태', '지원일', '연락처', '이메일'].join(','),
                 ...applicantsData.map(a => [
                     a.name, a.age, a.genre, a.song, 
                     a.status === 'approved' ? '승인' : a.status === 'pending' ? '대기' : '거절',
-                    a.date
+                    a.date, a.phone || '', a.email || ''
                 ].join(','))
             ].join('\n');
             
-            // 다운로드 링크 생성
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            // UTF-8 BOM 추가 (한글 깨짐 방지)
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `지원자_목록_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
             
             showNotification('지원자 데이터를 CSV 파일로 내보냈습니다.', 'success');
-            addRecentActivity('데이터 내보내기', '방금 전');
         }
 
         function refreshData() {
@@ -839,9 +1861,156 @@
             showNotification('데이터를 새로고침했습니다.', 'success');
         }
 
-        // 테스트 지원자 추가 버튼 (개발용)
-        function addTestData() {
-            addTestApplicant();
+        // 테스트 지원자 추가
+        function addTestApplicants() {
+            console.log('addTestApplicants 함수 시작');
+            
+            try {
+                if (confirm('테스트 지원자 데이터를 추가하시겠습니까?')) {
+                    console.log('사용자가 테스트 지원자 추가를 확인했습니다');
+                    
+                    const currentTime = new Date();
+                    const testApplicants = [
+                        {
+                            id: Date.now() + Math.random() * 1000,
+                            name: '김지수',
+                            age: 25,
+                            genre: '팝',
+                            song: '아이유 - 좋은 날',
+                            status: 'pending',
+                            date: currentTime.toLocaleDateString('ko-KR'),
+                            phone: '010-1234-5678',
+                            email: 'test1@example.com',
+                            experience: '대학교 동아리 활동, 버스킹 경험 2년',
+                            motivation: '음악을 통해 사람들과 소통하고 싶습니다.',
+                            skills: ['발성', '감정표현'],
+                            availableTime: '주말',
+                            submitTime: currentTime.toLocaleString('ko-KR')
+                        },
+                        {
+                            id: Date.now() + Math.random() * 1000 + 1,
+                            name: '박민수',
+                            age: 28,
+                            genre: '록',
+                            song: 'Queen - Bohemian Rhapsody',
+                            status: 'pending',
+                            date: currentTime.toLocaleDateString('ko-KR'),
+                            phone: '010-2345-6789',
+                            email: 'test2@example.com',
+                            experience: '밴드 활동 5년, 클럽 공연 경험',
+                            motivation: '록 음악의 매력을 무대에서 보여주고 싶습니다.',
+                            skills: ['고음', '파워풀한 보컬'],
+                            availableTime: '평일 저녁',
+                            submitTime: currentTime.toLocaleString('ko-KR')
+                        },
+                        {
+                            id: Date.now() + Math.random() * 1000 + 2,
+                            name: '이서연',
+                            age: 22,
+                            genre: '재즈',
+                            song: 'Ella Fitzgerald - Summertime',
+                            status: 'approved',
+                            date: currentTime.toLocaleDateString('ko-KR'),
+                            phone: '010-3456-7890',
+                            email: 'test3@example.com',
+                            experience: '재즈 보컬 전공, 카페 공연 다수',
+                            motivation: '재즈의 깊이를 대중에게 전달하고 싶습니다.',
+                            skills: ['즉흥연주', '스캣창법'],
+                            availableTime: '주말',
+                            submitTime: currentTime.toLocaleString('ko-KR'),
+                            approvedDate: currentTime.toLocaleDateString('ko-KR')
+                        }
+                    ];
+
+                    console.log('테스트 지원자 배열 생성:', testApplicants);
+
+                    // 기존 데이터에 추가
+                    testApplicants.forEach((applicant, index) => {
+                        applicantsData.push(applicant);
+                        console.log(`지원자 ${index + 1} 추가:`, applicant.name);
+                    });
+
+                    console.log('현재 총 지원자 수:', applicantsData.length);
+
+                    // 데이터 저장
+                    saveData();
+                    console.log('데이터 저장 완료');
+
+                    // UI 업데이트
+                    loadApplicants();
+                    console.log('지원자 목록 로드 완료');
+
+                    updateCounts();
+                    console.log('통계 업데이트 완료');
+
+                    // 활동 로그 추가
+                    addRecentActivity('테스트 지원자 3명 추가', '방금 전');
+                    console.log('최근 활동 추가 완료');
+
+                    // 알림 표시
+                    showNotification('테스트 지원자 3명을 추가했습니다.', 'success');
+                    console.log('알림 표시 완료');
+
+                    console.log('테스트 지원자 추가 모든 작업 완료');
+                } else {
+                    console.log('사용자가 테스트 지원자 추가를 취소했습니다');
+                }
+            } catch (error) {
+                console.error('테스트 지원자 추가 중 오류 발생:', error);
+                alert('테스트 지원자 추가 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 모든 데이터 삭제
+        function clearAllData() {
+            console.log('clearAllData 함수 시작');
+            
+            try {
+                if (confirm('정말로 모든 지원자 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다!')) {
+                    console.log('사용자가 첫 번째 확인을 했습니다');
+                    
+                    if (confirm('마지막 확인: 모든 데이터가 영구적으로 삭제됩니다. 계속하시겠습니까?')) {
+                        console.log('사용자가 최종 확인을 했습니다');
+                        console.log('삭제 전 지원자 수:', applicantsData.length);
+                        
+                        // 데이터 초기화
+                        applicantsData = [];
+                        rejectedCount = 0;
+                        
+                        console.log('메모리에서 데이터 삭제 완료');
+                        
+                        // localStorage에서 삭제
+                        localStorage.removeItem('applicantsData');
+                        localStorage.removeItem('rejectedCount');
+                        
+                        console.log('localStorage에서 데이터 삭제 완료');
+                        
+                        // UI 업데이트
+                        loadApplicants();
+                        console.log('지원자 목록 로드 완료');
+                        
+                        updateCounts();
+                        console.log('통계 업데이트 완료');
+                        
+                        // 활동 로그 추가
+                        addRecentActivity('모든 데이터 삭제', '방금 전');
+                        console.log('최근 활동 추가 완료');
+                        
+                        // 알림 표시
+                        showNotification('모든 데이터가 삭제되었습니다.', 'warning');
+                        console.log('알림 표시 완료');
+                        
+                        console.log('모든 데이터 삭제 작업 완료');
+                    } else {
+                        console.log('사용자가 최종 확인을 취소했습니다');
+                    }
+                } else {
+                    console.log('사용자가 첫 번째 확인을 취소했습니다');
+                }
+            } catch (error) {
+                console.error('데이터 삭제 중 오류 발생:', error);
+                alert('데이터 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
         }
 
         // 지원서 상세보기 모달 열기
