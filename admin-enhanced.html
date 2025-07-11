@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 - PLAYLOG SOUNDLAB</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin-enhanced.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <h1 class="nav-logo" onclick="goToMainSite()" style="cursor: pointer;">
+                    🎵 PLAYLOG SOUNDLAB
+                </h1>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" onclick="showSection('dashboard')">
+                            <span class="nav-icon">📊</span>대시보드
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" onclick="showSection('applicants')">
+                            <span class="nav-icon">🎤</span>지원자 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" onclick="showSection('performances')">
+                            <span class="nav-icon">🎭</span>공연 관리
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" onclick="showSection('settings')">
+                            <span class="nav-icon">⚙️</span>설정
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link main-site-link">
+                            <span class="nav-icon">🏠</span>메인사이트
+                        </a>
+                    </li>
+                </ul>
+                <div class="nav-toggle" id="mobile-menu" onclick="toggleMobileMenu()">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-main">
+        <!-- 대시보드 섹션 -->
+        <section id="dashboard" class="admin-section active">
+            <div class="section-header">
+                <div class="header-content">
+                    <h1 class="section-title">
+                        <span class="title-icon">🎭</span>
+                        관리자 대시보드
+                    </h1>
+                    <p class="section-subtitle">대주가요 시즌2 운영 관리 시스템</p>
+                </div>
+                <div class="header-actions">
+                    <div class="admin-clock" id="admin-clock">00:00:00</div>
+                    <button class="refresh-btn" onclick="refreshDashboard()">
+                        <span class="refresh-icon">🔄</span>
+                        새로고침
+                    </button>
+                </div>
+            </div>
+
+            <!-- 통계 카드들 -->
+            <div class="stats-grid">
+                <div class="stat-card primary">
+                    <div class="stat-icon">🎤</div>
+                    <div class="stat-content">
+                        <h3>총 지원자</h3>
+                        <p class="stat-number" data-count="24">0</p>
+                        <span class="stat-trend up">+5 이번 주</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card success">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <h3>승인 완료</h3>
+                        <p class="stat-number" data-count="18">0</p>
+                        <span class="stat-trend up">+3 오늘</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <h3>검토 대기</h3>
+                        <p class="stat-number" data-count="4">0</p>
+                        <span class="stat-trend down">-2 오늘</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card info">
+                    <div class="stat-icon">🎭</div>
+                    <div class="stat-content">
+                        <h3>다음 공연</h3>
+                        <p class="stat-number">7.19</p>
+                        <span class="stat-trend">8일 남음</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 빠른 작업 패널 -->
+            <div class="quick-actions-panel">
+                <h2 class="panel-title">
+                    <span class="panel-icon">⚡</span>
+                    빠른 작업
+                </h2>
+                <div class="actions-grid">
+                    <button class="action-btn primary" onclick="generateAuthCode()">
+                        <div class="action-icon">🔑</div>
+                        <div class="action-content">
+                            <h4>인증 코드 생성</h4>
+                            <p>승인된 보컬리스트용</p>
+                        </div>
+                    </button>
+                    
+                    <button class="action-btn secondary" onclick="sendBulkNotifications()">
+                        <div class="action-icon">📧</div>
+                        <div class="action-content">
+                            <h4>일괄 알림 발송</h4>
+                            <p>결과 통지 메일</p>
+                        </div>
+                    </button>
+                    
+                    <button class="action-btn success" onclick="exportData()">
+                        <div class="action-icon">📊</div>
+                        <div class="action-content">
+                            <h4>데이터 내보내기</h4>
+                            <p>Excel/CSV 파일</p>
+                        </div>
+                    </button>
+                    
+                    <button class="action-btn warning" onclick="backupSystem()">
+                        <div class="action-icon">💾</div>
+                        <div class="action-content">
+                            <h4>시스템 백업</h4>
+                            <p>전체 데이터 보관</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 최근 활동 -->
+            <div class="recent-activity-panel">
+                <h2 class="panel-title">
+                    <span class="panel-icon">📋</span>
+                    최근 활동
+                </h2>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon approved">✅</div>
+                        <div class="activity-content">
+                            <p class="activity-text"><strong>김보컬</strong>님의 지원을 승인했습니다</p>
+                            <span class="activity-time">5분 전</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon new">🆕</div>
+                        <div class="activity-content">
+                            <p class="activity-text"><strong>이가수</strong>님이 새로 지원했습니다</p>
+                            <span class="activity-time">15분 전</span>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon rejected">❌</div>
+                        <div class="activity-content">
+                            <p class="activity-text"><strong>박아티스트</strong>님의 지원을 거절했습니다</p>
+                            <span class="activity-time">1시간 전</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 지원자 관리 섹션 -->
+        <section id="applicants" class="admin-section">
+            <div class="section-header">
+                <div class="header-content">
+                    <h1 class="section-title">
+                        <span class="title-icon">🎤</span>
+                        지원자 관리
+                    </h1>
+                    <p class="section-subtitle">보컬 지원자 검토 및 승인 관리</p>
+                </div>
+                <div class="header-actions">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filterApplicants('all')">전체</button>
+                        <button class="filter-tab" onclick="filterApplicants('pending')">대기중</button>
+                        <button class="filter-tab" onclick="filterApplicants('approved')">승인</button>
+                        <button class="filter-tab" onclick="filterApplicants('rejected')">거절</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 지원자 테이블 -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>지원자 목록 (<span id="applicant-count">6</span>명)</h3>
+                    <div class="table-actions">
+                        <button class="btn-secondary" onclick="refreshApplicants()">
+                            🔄 새로고침
+                        </button>
+                        <button class="btn-primary" onclick="exportApplicants()">
+                            📥 Excel 내보내기
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="enhanced-table-wrapper">
+                    <table class="enhanced-table">
+                        <thead>
+                            <tr>
+                                <th>지원자 정보</th>
+                                <th>연락처</th>
+                                <th>장르</th>
+                                <th>준비곡</th>
+                                <th>지원일</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicants-tbody">
+                            <tr data-status="pending">
+                                <td>
+                                    <div class="applicant-info">
+                                        <div class="applicant-avatar">김</div>
+                                        <div class="applicant-details">
+                                            <strong>김보컬</strong>
+                                            <span class="applicant-age">25세</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>010-1234-5678</td>
+                                <td><span class="genre-tag pop">팝</span></td>
+                                <td class="song-title">좋은 날 - 아이유</td>
+                                <td>2025-07-10</td>
+                                <td><span class="status-badge pending">검토 대기</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-approve" onclick="approveApplicant(this)" title="승인">✓</button>
+                                        <button class="btn-reject" onclick="rejectApplicant(this)" title="거절">✗</button>
+                                        <button class="btn-detail" onclick="viewApplicantDetail(this)" title="상세보기">👁</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-status="approved">
+                                <td>
+                                    <div class="applicant-info">
+                                        <div class="applicant-avatar">이</div>
+                                        <div class="applicant-details">
+                                            <strong>이가수</strong>
+                                            <span class="applicant-age">28세</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>010-9876-5432</td>
+                                <td><span class="genre-tag rnb">R&B</span></td>
+                                <td class="song-title">Through the Night - 아이유</td>
+                                <td>2025-07-09</td>
+                                <td><span class="status-badge approved">승인 완료</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-edit" onclick="editApplicant(this)" title="수정">✏️</button>
+                                        <button class="btn-delete" onclick="deleteApplicant(this)" title="삭제">🗑️</button>
+                                        <button class="btn-detail" onclick="viewApplicantDetail(this)" title="상세보기">👁</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-status="pending">
+                                <td>
+                                    <div class="applicant-info">
+                                        <div class="applicant-avatar">박</div>
+                                        <div class="applicant-details">
+                                            <strong>박아티스트</strong>
+                                            <span class="applicant-age">26세</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>010-5555-6666</td>
+                                <td><span class="genre-tag indie">인디</span></td>
+                                <td class="song-title">사랑한다 안한다 - 윤하</td>
+                                <td>2025-07-08</td>
+                                <td><span class="status-badge pending">검토 대기</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-approve" onclick="approveApplicant(this)" title="승인">✓</button>
+                                        <button class="btn-reject" onclick="rejectApplicant(this)" title="거절">✗</button>
+                                        <button class="btn-detail" onclick="viewApplicantDetail(this)" title="상세보기">👁</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 공연 관리 섹션 -->
+        <section id="performances" class="admin-section">
+            <div class="section-header">
+                <div class="header-content">
+                    <h1 class="section-title">
+                        <span class="title-icon">🎭</span>
+                        공연 관리
+                    </h1>
+                    <p class="section-subtitle">공연 일정 및 출연진 관리</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="addNewPerformance()">
+                        ➕ 새 공연 추가
+                    </button>
+                </div>
+            </div>
+
+            <!-- 공연 스케줄 -->
+            <div class="performance-grid">
+                <div class="performance-card upcoming">
+                    <div class="performance-header">
+                        <div class="performance-date">
+                            <div class="date-main">19</div>
+                            <div class="date-sub">7월 (토)</div>
+                        </div>
+                        <div class="performance-status">다가오는 공연</div>
+                    </div>
+                    <div class="performance-content">
+                        <h3 class="performance-title">🎉 시즌2 오픈 공연</h3>
+                        <p class="performance-time">⏰ 오후 7:00</p>
+                        <div class="performers-list">
+                            <div class="performer-chip">김보컬</div>
+                            <div class="performer-chip">이가수</div>
+                            <div class="performer-chip">박아티스트</div>
+                            <div class="performer-chip more">+2명 더</div>
+                        </div>
+                    </div>
+                    <div class="performance-actions">
+                        <button class="btn-primary-outline" onclick="managePerformers()">출연진 관리</button>
+                        <button class="btn-secondary" onclick="editPerformance()">수정</button>
+                    </div>
+                </div>
+
+                <div class="performance-card planned">
+                    <div class="performance-header">
+                        <div class="performance-date">
+                            <div class="date-main">26</div>
+                            <div class="date-sub">7월 (토)</div>
+                        </div>
+                        <div class="performance-status">계획 중</div>
+                    </div>
+                    <div class="performance-content">
+                        <h3 class="performance-title">🎵 2회차 정기 공연</h3>
+                        <p class="performance-time">⏰ 오후 7:00</p>
+                        <div class="performers-list">
+                            <div class="performer-chip empty">출연진 모집 중</div>
+                        </div>
+                    </div>
+                    <div class="performance-actions">
+                        <button class="btn-primary" onclick="assignPerformers()">출연진 배정</button>
+                        <button class="btn-secondary" onclick="editPerformance()">수정</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 설정 섹션 -->
+        <section id="settings" class="admin-section">
+            <div class="section-header">
+                <div class="header-content">
+                    <h1 class="section-title">
+                        <span class="title-icon">⚙️</span>
+                        시스템 설정
+                    </h1>
+                    <p class="section-subtitle">관리자 도구 및 시스템 관리</p>
+                </div>
+            </div>
+
+            <!-- 설정 그리드 -->
+            <div class="settings-grid">
+                <div class="setting-panel">
+                    <div class="setting-header">
+                        <div class="setting-icon">🔑</div>
+                        <h3>인증 코드 관리</h3>
+                    </div>
+                    <div class="setting-content">
+                        <p>승인된 보컬리스트를 위한 인증 코드를 생성하고 관리합니다.</p>
+                        <div class="setting-actions">
+                            <button class="btn-primary" onclick="manageAuthCodes()">코드 관리</button>
+                            <button class="btn-secondary" onclick="generateNewCode()">새 코드 생성</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-panel">
+                    <div class="setting-header">
+                        <div class="setting-icon">📧</div>
+                        <h3>알림 설정</h3>
+                    </div>
+                    <div class="setting-content">
+                        <p>지원자 및 관리자를 위한 이메일 알림을 설정합니다.</p>
+                        <div class="setting-actions">
+                            <button class="btn-primary" onclick="configureNotifications()">알림 설정</button>
+                            <button class="btn-secondary" onclick="testEmail()">테스트 발송</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-panel">
+                    <div class="setting-header">
+                        <div class="setting-icon">💾</div>
+                        <h3>데이터 백업</h3>
+                    </div>
+                    <div class="setting-content">
+                        <p>시스템 데이터를 안전하게 백업하고 복원합니다.</p>
+                        <div class="setting-actions">
+                            <button class="btn-primary" onclick="createBackup()">백업 생성</button>
+                            <button class="btn-secondary" onclick="restoreBackup()">백업 복원</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-panel">
+                    <div class="setting-header">
+                        <div class="setting-icon">📊</div>
+                        <h3>시스템 통계</h3>
+                    </div>
+                    <div class="setting-content">
+                        <p>시스템 사용량과 성능을 모니터링합니다.</p>
+                        <div class="setting-actions">
+                            <button class="btn-primary" onclick="viewSystemStats()">통계 보기</button>
+                            <button class="btn-secondary" onclick="exportStats()">리포트 내보내기</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 모달창들 -->
+    <div id="applicant-detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>지원자 상세 정보</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- 동적으로 채워질 내용 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 알림 컨테이너 -->
+    <div id="toast-container"></div>
+
+    <script src="admin-enhanced.js"></script>
+</body>
+</html>

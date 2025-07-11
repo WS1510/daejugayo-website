@@ -11,22 +11,25 @@
     <header>
         <nav class="navbar">
             <div class="nav-container">
-                <h1 class="nav-logo">PLAYLOG SOUNDLAB</h1>
+                <h1 class="nav-logo" onclick="goToHome()" style="cursor: pointer;">PLAYLOG SOUNDLAB</h1>
                 <ul class="nav-menu">
                     <li class="nav-item">
-                        <a href="#home" class="nav-link">홈</a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('home')">홈</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#about" class="nav-link">레이블 소개</a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('about')">레이블 소개</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#daejugayo" class="nav-link">대주가요</a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('daejugayo')">대주가요</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#apply" class="nav-link">지원하기</a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('apply')">지원하기</a>
                     </li>
                     <li class="nav-item">
-                        <a href="#contact" class="nav-link">FAQ</a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="scrollToSection('contact')">FAQ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link admin-login-btn" onclick="showAdminLogin()">관리자</a>
                     </li>
                 </ul>
                 <div class="nav-toggle" id="mobile-menu">
@@ -247,78 +250,259 @@
                 
                 <div class="apply-tabs">
                     <button class="tab-button active" onclick="switchTab('vocal')">보컬 지원</button>
+                    <button class="tab-button restricted" id="performance-tab" onclick="checkAccess('performance')" style="display: none;">공연 참여 신청</button>
                     <button class="tab-button" onclick="switchTab('party')">파티 참여</button>
+                </div>
+                
+                <!-- 합격자 인증 섹션 -->
+                <div class="access-control">
+                    <div class="access-info">
+                        <p>📋 <strong>공연 참여 신청</strong>은 보컬 오디션 합격자만 이용할 수 있습니다.</p>
+                        <button class="access-btn" onclick="showAccessForm()">합격자 인증하기</button>
+                    </div>
                 </div>
 
                 <!-- 보컬 지원 폼 -->
                 <div id="vocal-application" class="application-form active">
                     <div class="form-header">
                         <h3>🎤 보컬 지원하기</h3>
-                        <p>대주가요에서 공연할 보컬을 모집합니다. 당신의 재능을 보여주세요!</p>
+                        <p>대주가요 보컬로 오디션을 받고 싶으신가요? 언제든지 지원해주세요!</p>
+                    </div>
+                    
+                    <!-- 오디션 안내 -->
+                    <div class="performance-info">
+                        <div class="info-card welcome">
+                            <h4>� 보컬 오디션 안내</h4>
+                            <div class="performance-details">
+                                <div class="detail-item">
+                                    <div class="detail-icon">📝</div>
+                                    <div class="detail-content">
+                                        <strong>지원 절차</strong>
+                                        <p>지원서 제출 → 심사 → 합격 통보 → <span class="highlight">공연 참여 신청</span><br>
+                                        보컬 지원은 <span class="highlight">항시 열려있으며</span> 수시로 심사를 진행합니다.</p>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">🎵</div>
+                                    <div class="detail-content">
+                                        <strong>합격 후 혜택</strong>
+                                        <p>합격하시면 각 회차별 <span class="highlight">공연 참여 신청</span>을 할 수 있습니다.<br>
+                                        매주 토요일 대주가요 무대에서 여러분의 재능을 펼쳐보세요!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <form class="vocal-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="vocal-name">이름 *</label>
-                                <input type="text" id="vocal-name" name="name" required>
+                        <!-- 기본 정보 섹션 -->
+                        <div class="form-section">
+                            <h4 class="section-header">👤 기본 정보</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="vocal-name">이름 *</label>
+                                    <input type="text" id="vocal-name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vocal-age">나이 *</label>
+                                    <input type="number" id="vocal-age" name="age" min="16" max="60" required>
+                                </div>
                             </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="vocal-phone">연락처 *</label>
+                                    <input type="tel" id="vocal-phone" name="phone" 
+                                        placeholder="010-0000-0000" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vocal-email">이메일 *</label>
+                                    <input type="email" id="vocal-email" name="email" 
+                                        placeholder="example@email.com" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 음악 정보 및 지원 내용 섹션 -->
+                        <div class="form-section">
+                            <h4 class="section-header">🎵 음악 정보 및 지원 내용</h4>
                             <div class="form-group">
-                                <label for="vocal-age">나이 *</label>
-                                <input type="number" id="vocal-age" name="age" min="16" max="60" required>
+                                <label for="vocal-genre">선호 장르 *</label>
+                                <select id="vocal-genre" name="genre" required>
+                                    <option value="">장르를 선택하세요</option>
+                                    <option value="팝">팝</option>
+                                    <option value="록">록</option>
+                                    <option value="재즈">재즈</option>
+                                    <option value="R&B">R&B</option>
+                                    <option value="인디">인디</option>
+                                    <option value="발라드">발라드</option>
+                                    <option value="기타">기타</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocal-song">오디션 곡 *</label>
+                                <input type="text" id="vocal-song" name="song" 
+                                    placeholder="아티스트 - 곡명 (예: 아이유 - 좋은 날)" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocal-experience">공연 경험 및 음악 활동</label>
+                                <textarea id="vocal-experience" name="experience" rows="4" 
+                                    placeholder="이전 공연 경험, 음악 활동, 수상 경력 등을 자세히 적어주세요..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocal-video">영상 링크 (선택)</label>
+                                <input type="url" id="vocal-video" name="video" 
+                                    placeholder="YouTube, Instagram 등 본인 공연 영상 링크">
+                                <small class="form-hint">본인의 공연 영상이 있다면 공유해주세요 (심사에 도움이 됩니다)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocal-files">파일 첨부 (선택)</label>
+                                <div class="file-upload-container">
+                                    <input type="file" id="vocal-files" name="files" multiple 
+                                        accept=".mp3,.wav,.m4a,.mp4,.jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                        class="file-input">
+                                    <label for="vocal-files" class="file-upload-label">
+                                        📎 파일 선택하기
+                                    </label>
+                                    <div class="file-list" id="file-list"></div>
+                                </div>
+                                <small class="form-hint">음성 파일, 영상, 사진, PDF 등을 첨부할 수 있습니다 (최대 10MB, 파일당)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="vocal-message">지원 동기 *</label>
+                                <textarea id="vocal-message" name="message" rows="5" 
+                                    placeholder="대주가요에 지원하는 이유와 음악에 대한 본인의 생각을 자유롭게 적어주세요..." required></textarea>
+                                <small class="form-hint">진솔한 마음을 담아 작성해주세요</small>
                             </div>
                         </div>
                         
+                        <button type="submit" class="submit-btn">🎤 보컬 지원하기</button>
+                    </form>
+                </div>
+
+                <!-- 공연 참여 신청 폼 -->
+                <div id="performance-application" class="application-form">
+                    <div class="form-header">
+                        <h3>🎭 공연 참여 신청</h3>
+                        <p>보컬 오디션 합격자만 신청 가능합니다. 회차별로 공연에 참여해보세요!</p>
+                    </div>
+                    
+                    <!-- 공연 안내 -->
+                    <div class="performance-info">
+                        <div class="info-card welcome">
+                            <h4>🎉 대주가요 시즌2 공연 참여 안내</h4>
+                            <div class="performance-details">
+                                <div class="detail-item">
+                                    <div class="detail-icon">🎵</div>
+                                    <div class="detail-content">
+                                        <strong>공연 방식</strong>
+                                        <p>5명의 보컬이 각각 <span class="highlight">2곡으로 무대</span>를 꾸미고,<br>
+                                        공연이 모두 끝난 뒤 관객 투표로 <span class="highlight">'오늘의 무대'</span>가 선정됩니다.</p>
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-icon">⏰</div>
+                                    <div class="detail-content">
+                                        <strong>무대 구성</strong>
+                                        <p><span class="highlight">2곡을 준비</span>해서 하나의 무대(약 15분)를 만들어주세요.<br>
+                                        곡 선택은 자유이며, 자신만의 분위기와 감성을 담아주시면 좋아요!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-card payment">
+                            <h4>🎫 노쇼 방지비용 안내</h4>
+                            <div class="payment-content">
+                                <p class="payment-description">
+                                    대주가요는 보컬 한 분 한 분의 무대가 소중히 준비되는 공연 중심 소셜링입니다.<br>
+                                    공연의 완성도를 위해, 참여 시 <strong class="payment-amount">'노쇼방지 비용' 2만원</strong>을 선입금받고 있습니다.
+                                </p>
+                                
+                                <div class="bank-info">
+                                    <div class="bank-details">
+                                        <span class="bank-label">노쇼비 입금계좌</span>
+                                        <span class="bank-account">토스뱅크 대주가요 1001-8744-1070</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="refund-policy">
+                                    <h5>💰 환불 정책</h5>
+                                    <ul>
+                                        <li><span class="policy-good">✅ 정상 참석시</span> 전액 환불</li>
+                                        <li><span class="policy-bad">❌ 무단불참 또는 당일 불참</span> 환불 불가</li>
+                                        <li><span class="policy-warning">⚠️ 불참시</span> 최소 3일 전 사전 연락 필수</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="commitment-message">
+                                    <p><strong>성실한 참여가 무대를 완성합니다. 감사합니다!</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form class="performance-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="vocal-phone">연락처 *</label>
-                                <input type="tel" id="vocal-phone" name="phone" required>
+                                <label for="perf-name">이름 *</label>
+                                <input type="text" id="perf-name" name="name" required>
                             </div>
                             <div class="form-group">
-                                <label for="vocal-email">이메일 *</label>
-                                <input type="email" id="vocal-email" name="email" required>
+                                <label for="perf-phone">연락처 *</label>
+                                <input type="tel" id="perf-phone" name="phone" required>
                             </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="vocal-genre">선호 장르 *</label>
-                            <select id="vocal-genre" name="genre" required>
-                                <option value="">장르를 선택하세요</option>
-                                <option value="pop">팝</option>
-                                <option value="rock">록</option>
-                                <option value="jazz">재즈</option>
-                                <option value="rnb">R&B</option>
-                                <option value="indie">인디</option>
-                                <option value="ballad">발라드</option>
-                                <option value="other">기타</option>
+                            <label for="perf-date">참여 희망 날짜 *</label>
+                            <select id="perf-date" name="performance_date" required>
+                                <option value="">날짜를 선택하세요</option>
+                                <option value="2025-07-19">7월 19일 (토) - 시즌2 오픈</option>
+                                <option value="2025-07-26">7월 26일 (토) - 2회차</option>
+                                <option value="2025-08-02">8월 2일 (토) - 3회차</option>
+                                <option value="2025-08-09">8월 9일 (토) - 4회차</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
-                            <label for="vocal-experience">공연 경험</label>
-                            <textarea id="vocal-experience" name="experience" rows="4" 
-                                placeholder="이전 공연 경험이나 음악 활동 경력을 적어주세요..."></textarea>
+                            <label for="perf-song1">1번곡 *</label>
+                            <input type="text" id="perf-song1" name="song1" 
+                                placeholder="첫 번째 공연곡 (아티스트 - 곡명)" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="vocal-song">준비곡 *</label>
-                            <input type="text" id="vocal-song" name="song" 
-                                placeholder="공연하고 싶은 곡명을 적어주세요" required>
+                            <label for="perf-song2">2번곡 *</label>
+                            <input type="text" id="perf-song2" name="song2" 
+                                placeholder="두 번째 공연곡 (아티스트 - 곡명)" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="vocal-video">영상 링크 (선택)</label>
-                            <input type="url" id="vocal-video" name="video" 
-                                placeholder="YouTube, Instagram 등 본인 공연 영상 링크">
+                            <label for="perf-concept">무대 컨셉</label>
+                            <textarea id="perf-concept" name="concept" rows="3" 
+                                placeholder="이번 무대의 컨셉이나 전달하고 싶은 메시지를 적어주세요..."></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label for="vocal-message">지원 동기</label>
-                            <textarea id="vocal-message" name="message" rows="4" 
-                                placeholder="대주가요에 지원하는 이유를 적어주세요..."></textarea>
+                            <label for="perf-special">특별 요청사항</label>
+                            <textarea id="perf-special" name="special_request" rows="3" 
+                                placeholder="무대 준비를 위한 특별 요청사항이 있다면 적어주세요..."></textarea>
                         </div>
                         
-                        <button type="submit" class="submit-btn">보컬 지원하기</button>
+                        <div class="form-group payment-confirmation">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="payment-confirm" name="payment_confirm" required>
+                                <span class="checkmark"></span>
+                                노쇼방지 비용 2만원 입금을 완료했습니다. (토스뱅크 1001-8744-1070)
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">공연 참여 신청하기</button>
                     </form>
                 </div>
 
@@ -393,6 +577,41 @@
                 </div>
             </div>
         </section>
+
+        <!-- 합격자 인증 모달 -->
+        <div id="access-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🎭 합격자 인증</h3>
+                    <span class="close" onclick="closeAccessModal()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>보컬 오디션 합격자임을 인증해주세요.</p>
+                    <form id="access-form" onsubmit="verifyAccess(event)">
+                        <div class="form-group">
+                            <label for="access-name">이름 *</label>
+                            <input type="text" id="access-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="access-phone">연락처 *</label>
+                            <input type="tel" id="access-phone" name="phone" required 
+                                placeholder="보컬 지원시 입력한 연락처">
+                        </div>
+                        <div class="form-group">
+                            <label for="access-code">인증 코드 *</label>
+                            <input type="text" id="access-code" name="code" required 
+                                placeholder="합격 통보시 받은 인증 코드">
+                        </div>
+                        <button type="submit" class="verify-btn">인증하기</button>
+                    </form>
+                    <div class="access-help">
+                        <p>💡 <strong>인증 코드를 받지 못하셨나요?</strong></p>
+                        <p>📧 문의: playlogsoundlab@gmail.com</p>
+                        <p>📱 인스타그램: @singnsul612</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <section id="contact" class="section faq-section">
             <div class="container">
@@ -488,6 +707,32 @@
             </div>
         </section>
     </main>
+
+    <!-- 관리자 로그인 모달 -->
+    <div id="admin-login-modal" class="admin-modal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3>관리자 로그인</h3>
+                <button class="admin-modal-close" onclick="closeAdminLogin()">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+                    <div class="admin-form-group">
+                        <label for="admin-username">아이디</label>
+                        <input type="text" id="admin-username" name="username" required>
+                    </div>
+                    <div class="admin-form-group">
+                        <label for="admin-password">비밀번호</label>
+                        <input type="password" id="admin-password" name="password" required>
+                    </div>
+                    <div class="admin-error-message" id="admin-error" style="display: none;">
+                        잘못된 아이디 또는 비밀번호입니다.
+                    </div>
+                    <button type="submit" class="admin-login-btn-submit">로그인</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <div class="container">
